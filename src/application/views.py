@@ -1,11 +1,12 @@
+
+
 from flask import render_template, request
 from src import app
+import mysql.connector
 
 @app.route('/')
 def index():
-    return '欢迎'
 
-    """
     return render_template('index.html')
 
 @app.route('/a', methods=['POST'])
@@ -44,4 +45,3 @@ def get_post():
     cursor.close()
     cnx.close()
     return render_template('moment_result_wb.html', query_title_wb=outcome_title, query_outcome=outcome, query_state=query_row)
-"""

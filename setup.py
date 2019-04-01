@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='src',
+    name='SpeechApplication',
     version='1.0',
     description='对演讲稿数据库的简单运用',
     packages=find_packages(),
