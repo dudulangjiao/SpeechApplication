@@ -9,6 +9,7 @@ import click
 #from flask.cli import AppGroup
 from flask.cli import FlaskGroup
 from src import app
+#from src.application.database import Speech_sheet
 
 def create_app():
     # other setup
@@ -25,7 +26,8 @@ def cli():
 @cli.command()
 def tmp_command():
     click.echo('这是第1行临时命令')
-
+    wd = Speech_sheet.query.filter(Speech_sheet.speech_id == 1).first()
+    print(wd)
 @cli.command()
 def flask_test2():
     click.echo('这是第2行临时命令')
