@@ -17,24 +17,12 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 Base.prepare(engine, reflect=True)
 
 Word_sheet = Base.classes.word_sheet
-
-"""
 Speaker_sheet = Base.classes.speaker_sheet
 Sentence_sheet = Base.classes.sentence_sheet
-Word_sheet = Base.classes.word_sheet
 Word_position_sheet = Base.classes.word_position_sheet
 Part_of_speech_sheet = Base.classes.part_of_speech_sheet
 Depend_synta_re_sheet = Base.classes.depend_synta_re_sheet
 Named_entity_sheet = Base.classes.named_entity_sheet
 Semant_role_type_sheet = Base.classes.semant_role_type_sheet
-"""
-
-#session = Session(engine)
-
-#db_session = scoped_session(sessionmaker(autocommit=False,
-             #                            autoflush=False,
-               #                          bind=engine))
-
-#Base.query = session.query_property()
 
 

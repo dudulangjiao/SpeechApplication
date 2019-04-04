@@ -3,7 +3,7 @@
 from flask import render_template, request
 from src import app
 import mysql.connector
-from src.application.database import db_session, Word_sheet
+from src.application.database import db_session, Word_sheet, Sentence_sheet
 
 @app.route('/')
 def index():
@@ -20,15 +20,16 @@ def submit_cm():
     if not key_words:
         return render_template('index.html', prompt='关键词不能为空，请重新输入：')
     else:
+
         session = db_session()
-        query_row = session.query(Word_sheet).filter_by(word_content=area_unicode).all()
+        query_row = session.query(Sentence_sheet).join(Word_sheet).filter_by(word_content=area_unicode).all()
         print(type(query_row))
         #query_row = query_row.__dict__
         db_session.remove()
-        #print(query_row)
+        print(query_row)
         wd = query_row[0]
         #print(type(wd))
-        we = wd.word_content
+        we = wd.sentence_content
         print(we)
 
         return render_template('query_result_wb.html', query_outcome=query_row)
