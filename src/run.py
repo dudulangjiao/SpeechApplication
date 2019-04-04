@@ -26,8 +26,7 @@ def cli():
 @cli.command()
 def tmp_command():
     click.echo('这是第1行临时命令')
-    wd = Speech_sheet.query.filter(Speech_sheet.speech_id == 1).first()
-    print(wd)
+
 @cli.command()
 def flask_test2():
     click.echo('这是第2行临时命令')
@@ -37,7 +36,7 @@ if __name__ == '__main__':
 # 运行临时命令
 # python3 /vagrant/SpeechApplication/src/run.py tmp-command
 # 运行主程序
-# python3 /vagrant/SpeechApplication/src/run.py run
+# python3 /vagrant/SpeechApplication/src/run.py run --host=192.168.0.199 --debugger
 
 
 

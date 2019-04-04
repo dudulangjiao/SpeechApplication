@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="cmn-Hans-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>查询页面</title>
+</head>
+<body>
+
+   <h1 style="font-style:italic">查询页面</h1>
+  {% if query_outcome %}
+  <p>查询结果如下：</p>
+  <ul>
+  {% for row in query_outcome %}
+   <li>{{ row.speech_id_of_word|e }}&nbsp{{ row.index_sentence_of_word_in_speech|e }}&nbsp{{ row.ndex_word_in_sentence|e }}&nbsp{{ row.word_content|e }}</li>
+  {% endfor %}
+  </ul>
+  {% else %}
+  <p>查询不到。</p>
+  {% endif %}
+  <p>{{ query_state }}</p>
+
+  <form action="/index" method="GET">
+    <legend>返回首页</legend>
+    <input type="submit" value="确定">
+  </form>
+
+</body>
+</html>

@@ -16,7 +16,7 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 
 Base.prepare(engine, reflect=True)
 
-Speech_sheet = Base.classes.speech_sheet
+Word_sheet = Base.classes.word_sheet
 
 """
 Speaker_sheet = Base.classes.speaker_sheet
@@ -37,10 +37,4 @@ Semant_role_type_sheet = Base.classes.semant_role_type_sheet
 
 #Base.query = session.query_property()
 
-wd = db_session.query(Speech_sheet).filter_by(speech_id = 1).first()
 
-db_session.remove()
-print(type(wd))
-print(wd)
-print(wd.speech_title)
-print('#####')

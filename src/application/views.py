@@ -3,6 +3,7 @@
 from flask import render_template, request
 from src import app
 import mysql.connector
+from src.application.database import db_session, Word_sheet
 
 @app.route('/')
 def index():
@@ -19,16 +20,20 @@ def submit_cm():
     if not key_words:
         return render_template('index.html', prompt='关键词不能为空，请重新输入：')
     else:
-        cnx = mysql.connector.connect(host=app.config['DB_HOST'], user='root', password='314159', database='FishFamily')
-        cursor = cnx.cursor(dictionary=True)
-        query = ("SELECT theme_sheet.theme_id, theme_sheet.post_title, post_sheet.area, post_sheet.post_id FROM theme_sheet, post_sheet WHERE theme_sheet.theme_id=post_sheet.be_theme_id AND post_sheet.area='{0}' AND post_sheet.floor_no=1").format(area_unicode)
-        cursor.execute(query)
-        outcome = cursor.fetchall()
-        query_row = cursor.rowcount
-        cursor.close()
-        cnx.close()
-        return render_template('query_result_wb.html', query_outcome=outcome, query_state=query_row)
+        session = db_session()
+        query_row = session.query(Word_sheet).filter_by(word_content=area_unicode).all()
+        print(type(query_row))
+        #query_row = query_row.__dict__
+        db_session.remove()
+        #print(query_row)
+        wd = query_row[0]
+        #print(type(wd))
+        we = wd.word_content
+        print(we)
 
+        return render_template('query_result_wb.html', query_outcome=query_row)
+
+"""
 @app.route('/b', methods=['GET'])
 def get_post():
     get_theme_original = request.values['get_theme_id']
@@ -45,3 +50,4 @@ def get_post():
     cursor.close()
     cnx.close()
     return render_template('moment_result_wb.html', query_title_wb=outcome_title, query_outcome=outcome, query_state=query_row)
+"""
