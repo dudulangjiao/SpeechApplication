@@ -37,6 +37,8 @@ if __name__ == '__main__':
 # python3 /vagrant/SpeechApplication/src/run.py tmp-command
 # 运行主程序
 # python3 /vagrant/SpeechApplication/src/run.py run --host=192.168.0.199 --debugger
+# 运行sh脚本，进行mysql操作
+# /vagrant/software/entermysql.sh
 
 
 

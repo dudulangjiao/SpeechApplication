@@ -1,2 +1,6 @@
 flask
 click
+pyltp==0.2.1
+SQLAlchemy
+Flask-SQLAlchemy
+mysql-connector-python

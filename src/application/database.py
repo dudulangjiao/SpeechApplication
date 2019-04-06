@@ -16,6 +16,7 @@ db_session = scoped_session(sessionmaker(autocommit=False,
 
 Base.prepare(engine, reflect=True)
 
+Speech_sheet = Base.classes.speech_sheet
 Word_sheet = Base.classes.word_sheet
 Speaker_sheet = Base.classes.speaker_sheet
 Sentence_sheet = Base.classes.sentence_sheet

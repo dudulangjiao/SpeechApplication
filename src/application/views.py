@@ -2,8 +2,8 @@
 
 from flask import render_template, request
 from src import app
-import mysql.connector
-from src.application.database import db_session, Word_sheet, Sentence_sheet
+from src.application.database import db_session, Word_sheet, Speech_sheet
+from src.application.base import LtpProcess
 
 @app.route('/')
 def index():
@@ -14,25 +14,47 @@ def index():
 def submit_cm():
     key_words = request.values['get_key_words']
 
-    # 防止地区名称前后有空字符
+    # 删除关键词前后的空字符
     area_unicode = key_words.strip()
 
     if not key_words:
         return render_template('index.html', prompt='关键词不能为空，请重新输入：')
     else:
-
+        # 用类LtpProcess进行分词处理
+        ltp_instance = LtpProcess(area_unicode)
+        word_list = ltp_instance.ltp_word()  # word_list类型是列表
         session = db_session()
-        query_row = session.query(Sentence_sheet).join(Word_sheet).filter_by(word_content=area_unicode).all()
-        print(type(query_row))
-        #query_row = query_row.__dict__
-        db_session.remove()
-        print(query_row)
-        wd = query_row[0]
-        #print(type(wd))
-        we = wd.sentence_content
-        print(we)
+        i = 0
+        query_row_list = []
+        for word_str in word_list:
+            if i == 0:
+                query_row = session.query(Word_sheet.speech_id_of_word).filter_by(word_content=word_str)\
+                                   .group_by(Word_sheet.speech_id_of_word).all()
+                print(type(query_row))
+                print(query_row)
+                wd = query_row[0]
+                print('*******')
+                print(wd)
+                print(wd.speech_id_of_word)
+                print(query_row_list)
 
-        return render_template('query_result_wb.html', query_outcome=query_row)
+            else:
+                query_row = session.query(Word_sheet.speech_id_of_word)\
+                    .filter(Word_sheet.speech_id_of_word.in_(query_row_list), Word_sheet.word_content==word_str) \
+                    .group_by(Word_sheet.speech_id_of_word).all()
+
+            query_row_list = []
+            for query_row_str in query_row:
+                query_row_list.append(query_row_str.speech_id_of_word)
+
+            i = i + 1
+
+        query_row_result = session.query(Speech_sheet.speech_id, Speech_sheet.speech_title) \
+            .filter(Speech_sheet.speech_id.in_(query_row_list)).all()
+
+        db_session.remove()
+
+        return render_template('query_result_wb.html', query_outcome=query_row_result)
 
 """
 @app.route('/b', methods=['GET'])
