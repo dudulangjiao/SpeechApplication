@@ -1,9 +1,26 @@
 
 
-from flask import render_template, request, g
+from flask import render_template, request, url_for
 from src import app
 from src.application.database import db_session, Word_sheet, Speech_sheet, Speaker_sheet
 from src.application.base import LtpProcess
+import os
+
+"""
+# 使用Flask静态文件的时候，每次更新，发现CSS或是Js或者其他的文件不会更新。这是因为浏览器的缓存问题。
+@app.context_processor
+def override_url_for():
+    return dict(url_for=dated_url_for)
+
+def dated_url_for(endpoint, **values):
+    if endpoint == 'application/static':
+        filename = values.get('filename', None)
+        if filename:
+            file_path = os.path.join(app.root_path,
+                                     endpoint, filename)
+            values['q'] = int(os.stat(file_path).st_mtime)
+    return url_for(endpoint, **values)
+"""
 
 @app.route('/')
 def index():
