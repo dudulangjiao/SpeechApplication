@@ -1,0 +1,20 @@
+h1 {
+    font-family:SimHei, sans-serif;
+    text-align:center;
+    font-size:22pt;
+    width:614px;
+    margin:0 auto;
+}
+
+div {
+    text-indent: 32pt;
+    font-size:16pt;
+    font-family:FangSong, sans-serif;
+    line-height:29.6pt;
+    width:614px;
+    margin:0 auto;
+}
+
+body {
+    background-color: #f8f8f5;
+}

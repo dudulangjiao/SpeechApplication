@@ -3,8 +3,7 @@
 from flask import render_template, request, url_for
 from src import app
 from src.application.database import db_session, Word_sheet, Speech_sheet, Speaker_sheet
-from src.application.base import LtpProcess
-import os
+from src.application.base import LtpProcess, process_page
 
 """
 # 使用Flask静态文件的时候，每次更新，发现CSS或是Js或者其他的文件不会更新。这是因为浏览器的缓存问题。
@@ -77,13 +76,16 @@ def submit_cm():
 
         return render_template('query_result_wb.html', query_outcome=query_row_result)
 
-
+# 按文稿id查询并展示文稿内容
 @app.route('/b/<int:url_speech_id>', methods=['GET'])
 def content_cm(url_speech_id):
     session = db_session()
     sp_content = session.query(Speech_sheet.speech_title, Speech_sheet.speech_content).filter(Speech_sheet.speech_id==url_speech_id).all()
     title_content = sp_content[0][0]
     sp_content = sp_content[0][1]
+    sp_content = process_page(sp_content)
+    print(sp_content)
+
     return render_template('speech_context.html', content_title = title_content, content_state=sp_content)
 """
 @app.route('/b', methods=['GET'])

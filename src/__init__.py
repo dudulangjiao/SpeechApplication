@@ -1,9 +1,14 @@
 # src/__init__.py
 from flask import Flask
 #import src.config.default
+import  os
+
+BASE_DIR = os.path.abspath(__file__)
+templates_dir = os.path.join(BASE_DIR, 'templates')
+static_dir = os.path.join(BASE_DIR, 'static')
 
 app = Flask(__name__, template_folder='/vagrant/SpeechApplication/src/application/templates',
-            static_folder='/src/application/static',
+            static_folder='/vagrant/SpeechApplication/src/application/static',
             instance_path='/vagrant/SpeechApplication/src/instance', instance_relative_config=True)
 
 # Load the default configuration
