@@ -9,6 +9,20 @@
   <br>
   <h1>{{ content_title }}</h1>
   <br><br>
-  <div>{{ content_state|safe }}</div>
+  <div id="box">{{ content_state|safe }}</div>
+
+  <script type="text/javascript">
+        var oBox = document.getElementById("box");
+        var oContent = oBox.innerHTML;
+        var testTxt = document.getElementById("testTxt");
+        var oBtn = document.getElementById("btn");
+        oBtn.onclick = function(){
+            var val = {{ values }};
+            var findText = oContent.split(val);
+            oBox.innerHTML = findText.join('<span style="color:red;">' + val + '</span> ');
+        };
+
+  </script>
+
 </body>
 </html>

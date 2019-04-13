@@ -7,7 +7,7 @@
 </head>
 <body>
 
-  <h1>查询<br>页面</h1>
+  <h1>查询页面</h1>
   {% if query_outcome %}
   <p>查询结果如下：</p>
   <ul>
@@ -18,9 +18,8 @@
   {% else %}
   <p>查询不到。</p>
   {% endif %}
-  <p>{{ query_state }}</p>
 
-  <form action="/index" method="GET">
+  <form action="/" method="GET">
     <legend>返回首页</legend>
     <input type="submit" value="确定">
   </form>
