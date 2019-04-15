@@ -3,7 +3,7 @@
 from flask import render_template, request, session
 from src import app
 from src.application.database import db_session, Word_sheet, Speech_sheet, Speaker_sheet, Sentence_sheet
-from src.application.base import LtpProcess, process_page
+from src.application.base import LtpProcess, StringSortWeight
 from sqlalchemy import func
 
 """
@@ -69,25 +69,45 @@ def submit_cm():
         query_row_result = sql_session.query(Speech_sheet.speech_id, Speaker_sheet.speaker_name, Speech_sheet.speech_title).join(Speaker_sheet) \
             .filter(Speech_sheet.speech_id.in_(tmp_word_list)).all()
 
-# 以下部分还处于研究阶段。。。。
-        # 列出一个句子中同时出现两个及以上关键词的文章(含相同的重复关键词)
-        query_result = sql_session.query(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech, func.count('*')) \
-            .filter(Word_sheet.speech_id_of_word.in_(tmp_word_list), Word_sheet.word_content.in_(word_list)) \
-            .group_by(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech).having(func.count('*')>1).all()
-        print('列出一个句子中同时出现两个及以上关键词的文章(含相同的重复关键词)')
-        print(query_result)
-        print('一个句子中同时出现两个及以上关键词的文章中，筛除掉两个以上相同关键词的文章')
-        for query_result_str in query_result:
-            tmp_sp_id_list = query_result_str.speech_id_of_word
-            tmp_se_id_list = query_result_str.index_sentence_of_word_in_speech
-            # 一个句子中同时出现两个及以上关键词的文章中，筛除掉两个以上相同关键词的文章
-            for zi in word_list:
-                query_result_two = sql_session.query(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech)\
-                    .filter(Word_sheet.speech_id_of_word==tmp_sp_id_list,
-                            Word_sheet.index_sentence_of_word_in_speech==tmp_se_id_list,
-                            Word_sheet.word_content == zi) \
+        # 根据词组组合在文章中出现的次数，对文章进行排序
+        # 列出一个句子中同时出现两个及以上关键词的句子(含相同的重复关键词)
+        query_sen_result = sql_session.query(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech, func.count('*')) \
+                    .filter(Word_sheet.speech_id_of_word.in_(tmp_word_list), Word_sheet.word_content.in_(word_list)) \
+                    .group_by(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech).having(func.count('*')>1).all()
+        #print('列出一个句子中同时出现两个及以上关键词的句子(含相同的重复关键词)')
+        #print(query_sen_result)
+
+
+        # 取出每一个句子，赋予排序权重
+        tmp_sentence_list = [[] for i in range(len(query_sen_result))]
+
+        sen_number = 0
+        for query_sen_result_list in query_sen_result:
+            tmp_query_sentence = sql_session.query(Sentence_sheet.speech_id_of_sentence,
+                                                   Sentence_sheet.index_sentence_in_speech,
+                                                   Sentence_sheet.sentence_content) \
+                    .filter(Sentence_sheet.speech_id_of_sentence == query_sen_result_list.speech_id_of_word,
+                            Sentence_sheet.index_sentence_in_speech == query_sen_result_list.index_sentence_of_word_in_speech) \
                     .all()
-                
+            #print('*********************************************')
+            #print(tmp_query_sentence)
+            for tmp__query_sen_list in tmp_query_sentence:
+                tmp_sentence = tmp__query_sen_list.sentence_content
+
+
+            # 创建StringSortWeight类的实例，对给定的句子，根据词组组合在句子中出现的次数，给与排序所依据的权重,并累加成文章排序的权重
+            sort_weight_instance = StringSortWeight(word_list, tmp_sentence)
+            search_sort_weight = sort_weight_instance.weight()
+
+            tmp_sentence_list[sen_number].append(search_sort_weight)
+            tmp_sentence_list[sen_number].append(query_sen_result_list.speech_id_of_word)
+            tmp_sentence_list[sen_number].append(query_sen_result_list.index_sentence_of_word_in_speech)
+            tmp_sentence_list[sen_number].append(tmp_sentence)
+            sen_number = sen_number + 1
+
+        tmp_sentence_list.sort(key=lambda s: s[0], reverse=False)
+        print(tmp_sentence_list)
+
 
         db_session.remove()
 
@@ -107,12 +127,12 @@ def content_cm(url_speech_id):
     sp_content = sql_session.query(Speech_sheet.speech_title, Speech_sheet.speech_content).filter(Speech_sheet.speech_id==url_speech_id).all()
     title_content = sp_content[0][0]
     sp_content = sp_content[0][1]
-    sp_content = process_page(sp_content, '\\n', '<br>&nbsp;&nbsp;&nbsp;&nbsp;')  # 把换行符\n转为网页换行符<br>
+    sp_content = sp_content.replace('\n', '<br>&nbsp;&nbsp;&nbsp;&nbsp;')  # 把换行符\n转为网页换行符<br>
     # 在多个关键字都插入html代码，变成红色显示
     word_number = session.get('word_number')
     for w_n in range(word_number):
         w_n_str = str(w_n)
-        sp_content = process_page(sp_content, session.get(w_n_str), '<span style="color:red;">'+ session.get(w_n_str) +'</span>')
+        sp_content = sp_content.replace(session.get(w_n_str), '<span style="color:red;">'+ session.get(w_n_str) +'</span>')
 
     return render_template('speech_context.html', content_title = title_content, content_state=sp_content)
 """

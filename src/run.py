@@ -26,10 +26,13 @@ def cli():
 @cli.command()
 def tmp_command():
     click.echo('这是第1行临时命令')
-    print('<br>')
-    aa = u'<br>'
-    bb = aa.encode('utf-8')
-    print(bb)
+    tmp_sentence_list = [[], []]
+    tmp_sentence_list[0].append(3)
+    tmp_sentence_list[0].append(2)
+
+    tmp_sentence_list[1].append(2)
+    tmp_sentence_list[1].append(2)
+    print(tmp_sentence_list)
 @cli.command()
 def flask_test2():
     click.echo('这是第2行临时命令')
