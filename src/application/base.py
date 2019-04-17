@@ -39,12 +39,12 @@ class StringSortWeight(object):
         self.word_list = word_list
         self.str_content = str_content
 
-    def word_join(self, begin_position, word_long):
+    def word_join(self, begin_position, word_l):
         """创建一个方法，给定word_list中要连接字符串的起始位置和连接的次数，返回连接的字符串"""
         tmp_str = ''
-        for x in range(word_long):
-            begin_position = begin_position + x
+        for x in range(word_l):
             tmp_str = self.word_list[begin_position] + tmp_str
+            begin_position = begin_position + 1
         return tmp_str
 
     def weight(self):
@@ -62,3 +62,27 @@ class StringSortWeight(object):
                     sort_weight = pow(integration, 5) + 10*integration + sort_weight
 
         return sort_weight
+
+
+def group_by(one_list, kk, re):
+
+    one_list.sort(key=lambda s: s[kk], reverse = False)  # 按第kk列升序排序
+
+    ll = len(one_list)
+    # [[关键字权重，讲稿ID]，[......].......]
+    dk_list = [[]]
+    dk_list[0].append(one_list[0][re])
+    dk_list[0].append(one_list[0][kk])
+    wwt = 0
+    for rt in range(ll):
+        if rt == 0:
+            pass
+        elif one_list[rt][1] == one_list[rt-1][1]:
+            dk_list[wwt][0] = dk_list[wwt][0] + one_list[rt][0]
+        elif one_list[rt][1] != one_list[rt-1][1]:
+            wwt = wwt + 1
+            dk_list.append([])
+            dk_list[wwt].append(one_list[rt][0])
+            dk_list[wwt].append(one_list[rt][1])
+
+    return dk_list

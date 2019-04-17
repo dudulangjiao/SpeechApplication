@@ -3,8 +3,7 @@
 from flask import render_template, request, session
 from src import app
 from src.application.database import db_session, Word_sheet, Speech_sheet, Speaker_sheet, Sentence_sheet
-from src.application.base import LtpProcess, StringSortWeight
-from sqlalchemy import func
+from src.application.base import LtpProcess, StringSortWeight, group_by
 
 """
 # 使用Flask静态文件的时候，每次更新，发现CSS或是Js或者其他的文件不会更新。这是因为浏览器的缓存问题。
@@ -45,7 +44,6 @@ def submit_cm():
         # 对每一个分词逐一进行循环查询，找出出现所有分词的文章
         i = 0
         tmp_word_list = []  # 用来临时保存查询的讲稿ID列表
-
         for word_str in word_list:
             if i == 0:
                 #找出存在第一个分词的文章
@@ -67,20 +65,16 @@ def submit_cm():
 
         # 列出出现所有分词的文章
         query_row_result = sql_session.query(Speech_sheet.speech_id, Speaker_sheet.speaker_name, Speech_sheet.speech_title).join(Speaker_sheet) \
-            .filter(Speech_sheet.speech_id.in_(tmp_word_list)).all()
+            .filter(Speech_sheet.speech_id.in_(tmp_word_list)).order_by(Speech_sheet.speech_id).all()
 
         # 根据词组组合在文章中出现的次数，对文章进行排序
-        # 列出一个句子中同时出现两个及以上关键词的句子(含相同的重复关键词)
-        query_sen_result = sql_session.query(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech, func.count('*')) \
+        # 列出一个句子中出现关键词的句子
+        query_sen_result = sql_session.query(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech) \
                     .filter(Word_sheet.speech_id_of_word.in_(tmp_word_list), Word_sheet.word_content.in_(word_list)) \
-                    .group_by(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech).having(func.count('*')>1).all()
-        #print('列出一个句子中同时出现两个及以上关键词的句子(含相同的重复关键词)')
-        #print(query_sen_result)
-
+                    .group_by(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech).all()
 
         # 取出每一个句子，赋予排序权重
         tmp_sentence_list = [[] for i in range(len(query_sen_result))]
-
         sen_number = 0
         for query_sen_result_list in query_sen_result:
             tmp_query_sentence = sql_session.query(Sentence_sheet.speech_id_of_sentence,
@@ -91,40 +85,52 @@ def submit_cm():
                     .all()
             #print('*********************************************')
             #print(tmp_query_sentence)
-            for tmp__query_sen_list in tmp_query_sentence:
-                tmp_sentence = tmp__query_sen_list.sentence_content
+            pda = []
+            for tmp_query_sen_list in tmp_query_sentence:
+                pda.append(tmp_query_sen_list.sentence_content)
+            tmp_sentence = pda[0]
 
-
-            # 创建StringSortWeight类的实例，对给定的句子，根据词组组合在句子中出现的次数，给与排序所依据的权重,并累加成文章排序的权重
+            # 创建StringSortWeight类的实例，对给定的句子，根据词组组合在句子中出现的次数，给与排序所依据的权重
             sort_weight_instance = StringSortWeight(word_list, tmp_sentence)
             search_sort_weight = sort_weight_instance.weight()
 
+            # [[关键字权重，讲稿ID，句子ID]，[......].......]
             tmp_sentence_list[sen_number].append(search_sort_weight)
             tmp_sentence_list[sen_number].append(query_sen_result_list.speech_id_of_word)
             tmp_sentence_list[sen_number].append(query_sen_result_list.index_sentence_of_word_in_speech)
-            tmp_sentence_list[sen_number].append(tmp_sentence)
             sen_number = sen_number + 1
 
-        tmp_sentence_list.sort(key=lambda s: s[0], reverse=False)
-        print(tmp_sentence_list)
+        # 调用group_by函数对句子的权重按文章ID进行分组小计，得出每篇文章的权重
+        re_list = group_by(tmp_sentence_list, 1, 0)
 
+        # 将query_row_result列表的字段加入re_list列表，以便进行排序后传给网页
+        ab = 0
+        for query_row_result_str in query_row_result:
+            if re_list[ab][1] == query_row_result_str.speech_id:
+                re_list[ab].append(query_row_result_str.speaker_name)
+                re_list[ab].append(query_row_result_str.speech_title)
+            else:
+                print('error!')
+            ab = ab + 1
+        re_list.sort(key=lambda s: s[0], reverse = True)  # 按权重降序排序
 
         db_session.remove()
 
-        # word_list列表中的关键字赋值给flask的session
+        # word_list列表中的关键字赋值给flask的session，以便进行红色显示
         long = len(word_list)
         session['word_number'] = long  # 关键字数量赋值给flask的session
         for i in range(long):
             i_str = str(i)
             session[i_str] = word_list[i]
 
-        return render_template('query_result_wb.html', query_outcome=query_row_result)
+        return render_template('query_result_wb.html', query_outcome=re_list)
 
 # 按文稿id查询并展示文稿内容
 @app.route('/b/<int:url_speech_id>', methods=['GET'])
 def content_cm(url_speech_id):
     sql_session = db_session()
-    sp_content = sql_session.query(Speech_sheet.speech_title, Speech_sheet.speech_content).filter(Speech_sheet.speech_id==url_speech_id).all()
+    sp_content = sql_session.query(Speech_sheet.speech_title, Speech_sheet.speech_content)\
+        .filter(Speech_sheet.speech_id==url_speech_id).all()
     title_content = sp_content[0][0]
     sp_content = sp_content[0][1]
     sp_content = sp_content.replace('\n', '<br>&nbsp;&nbsp;&nbsp;&nbsp;')  # 把换行符\n转为网页换行符<br>
@@ -135,6 +141,7 @@ def content_cm(url_speech_id):
         sp_content = sp_content.replace(session.get(w_n_str), '<span style="color:red;">'+ session.get(w_n_str) +'</span>')
 
     return render_template('speech_context.html', content_title = title_content, content_state=sp_content)
+
 """
 @app.route('/b', methods=['GET'])
 def get_post():
