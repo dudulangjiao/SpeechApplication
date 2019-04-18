@@ -3,7 +3,9 @@
 from flask import render_template, request, session
 from src import app
 from src.application.database import db_session, Word_sheet, Speech_sheet, Speaker_sheet, Sentence_sheet
-from src.application.base import LtpProcess, StringSortWeight, group_by
+from src.application.base import LtpProcess, StringSortWeight, ListGroupBy
+from operator import itemgetter
+from sqlalchemy import func
 
 """
 # 使用Flask静态文件的时候，每次更新，发现CSS或是Js或者其他的文件不会更新。这是因为浏览器的缓存问题。
@@ -41,77 +43,50 @@ def submit_cm():
         word_list = ltp_instance.ltp_word()  # word_list类型是列表
         sql_session = db_session()
 
-        # 对每一个分词逐一进行循环查询，找出出现所有分词的文章
-        i = 0
-        tmp_word_list = []  # 用来临时保存查询的讲稿ID列表
-        for word_str in word_list:
-            if i == 0:
-                #找出存在第一个分词的文章
-                query_speech_id = sql_session.query(Word_sheet.speech_id_of_word).filter_by(word_content=word_str)\
-                                   .group_by(Word_sheet.speech_id_of_word).all()
+        #找出存在分词的文章
+        query_speech_id = sql_session.query(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech,
+            func.group_concat(Word_sheet.word_content, ''))\
+            .group_by(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech)\
+            .filter(Word_sheet.word_content.in_(word_list)) \
+            .all()
 
-            else:
-                #在存在第一个分词的文章中，继续找出也同时存在第二个、第三个.....分词的文章
-                query_speech_id = sql_session.query(Word_sheet.speech_id_of_word)\
-                    .filter(Word_sheet.speech_id_of_word.in_(tmp_word_list), Word_sheet.word_content==word_str) \
-                    .group_by(Word_sheet.speech_id_of_word).all()
-
-            #把查询到的讲稿ID结果，格式从二维列表转化为一维列表，暂时保存到tmp_word_list
-            tmp_word_list = []
-            for speech_id_str in query_speech_id:
-                tmp_word_list.append(speech_id_str.speech_id_of_word)
-
-            i = i + 1
-
-        # 列出出现所有分词的文章
-        query_row_result = sql_session.query(Speech_sheet.speech_id, Speaker_sheet.speaker_name, Speech_sheet.speech_title).join(Speaker_sheet) \
-            .filter(Speech_sheet.speech_id.in_(tmp_word_list)).order_by(Speech_sheet.speech_id).all()
-
-        # 根据词组组合在文章中出现的次数，对文章进行排序
-        # 列出一个句子中出现关键词的句子
-        query_sen_result = sql_session.query(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech) \
-                    .filter(Word_sheet.speech_id_of_word.in_(tmp_word_list), Word_sheet.word_content.in_(word_list)) \
-                    .group_by(Word_sheet.speech_id_of_word, Word_sheet.index_sentence_of_word_in_speech).all()
+        #把词组连接成句子
+        list_group_by_instance = ListGroupBy(query_speech_id, [0, 1], 2)
+        sen_list = list_group_by_instance.target()
 
         # 取出每一个句子，赋予排序权重
-        tmp_sentence_list = [[] for i in range(len(query_sen_result))]
+        tmp_sentence_list = []
         sen_number = 0
-        for query_sen_result_list in query_sen_result:
-            tmp_query_sentence = sql_session.query(Sentence_sheet.speech_id_of_sentence,
-                                                   Sentence_sheet.index_sentence_in_speech,
-                                                   Sentence_sheet.sentence_content) \
-                    .filter(Sentence_sheet.speech_id_of_sentence == query_sen_result_list.speech_id_of_word,
-                            Sentence_sheet.index_sentence_in_speech == query_sen_result_list.index_sentence_of_word_in_speech) \
-                    .all()
-
-            pda = []
-            for tmp_query_sen_list in tmp_query_sentence:
-                pda.append(tmp_query_sen_list.sentence_content)
-            tmp_sentence = pda[0]
-
+        for tmp_sentence in sen_list:
             # 创建StringSortWeight类的实例，对给定的句子，根据词组组合在句子中出现的次数，给与排序所依据的权重
-            sort_weight_instance = StringSortWeight(word_list, tmp_sentence)
+            sort_weight_instance = StringSortWeight(word_list, tmp_sentence[2])
             search_sort_weight = sort_weight_instance.weight()
-
-            # [[关键字权重，讲稿ID，句子ID]，[......].......]
+            tmp_sentence_list.append([])
+            # [[关键字权重，讲稿ID]，[......].......]
+            tmp_sentence_list[sen_number].extend(tmp_sentence)
             tmp_sentence_list[sen_number].append(search_sort_weight)
-            tmp_sentence_list[sen_number].append(query_sen_result_list.speech_id_of_word)
-            tmp_sentence_list[sen_number].append(query_sen_result_list.index_sentence_of_word_in_speech)
             sen_number = sen_number + 1
 
-        # 调用group_by函数对句子的权重按文章ID进行分组小计，得出每篇文章的权重
-        re_list = group_by(tmp_sentence_list, 1, 0)
+        print(tmp_sentence_list)
+        # 调用ListGroupBy类对句子的权重按文章ID进行分组小计，得出每篇文章的权重
+        list_group_by_instance = ListGroupBy(tmp_sentence_list, [0], 1)
+        re_list = list_group_by_instance.target()
+        print(re_list)
 
-        # 将query_row_result列表的字段加入re_list列表，以便进行排序后传给网页
-        ab = 0
-        for query_row_result_str in query_row_result:
-            if re_list[ab][1] == query_row_result_str.speech_id:
-                re_list[ab].append(query_row_result_str.speaker_name)
-                re_list[ab].append(query_row_result_str.speech_title)
-            else:
-                print('error!')
-            ab = ab + 1
-        re_list.sort(key=lambda s: s[0], reverse = True)  # 按权重降序排序
+        tmp_sen_id_list = []
+        for tmp_sen_id in re_list:
+            tmp_sen_id_list.append(tmp_sen_id[0])
+
+        query_speech_title = sql_session.query(Speech_sheet.speech_id, Speaker_sheet.speaker_name,
+                                               Speech_sheet.speech_title).join(Speaker_sheet) \
+            .filter(Speech_sheet.speech_id.in_(tmp_sen_id_list)).order_by(Speech_sheet.speech_id).all()
+
+        hxd = 0
+        for de in query_speech_title:
+            re_list[hxd].extend(de)
+            hxd = hxd + 1
+
+        re_list.sort(key=itemgetter(1), reverse = True)  # 按权重降序排序
 
         db_session.remove()
 

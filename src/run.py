@@ -10,6 +10,7 @@ import click
 from flask.cli import FlaskGroup
 from src import app
 #from src.application.database import Speech_sheet
+from src.application.base import ListGroupBy
 
 def create_app():
     # other setup
@@ -26,16 +27,15 @@ def cli():
 @cli.command()
 def tmp_command():
     click.echo('这是第1行临时命令')
-    tmp_sentence_list = [[], []]
-    tmp_sentence_list[0].append(3)
-    tmp_sentence_list[0].append(2)
-
-    tmp_sentence_list[1].append(2)
-    tmp_sentence_list[1].append(2)
-    print(tmp_sentence_list)
+    a1 = [[5, 7 , 8], [2, 1 , 7], [5, 2 , 9], [5, 7 ,4], [2, 1 ,4]]
+    a2 = [[5, 7, '这'], [2, 1, '啊'], [5, 2, '独'], [5, 7, '是'], [2, 1, '呀'], [5, 7, '傻瓜'], [2, 1, '吗'],]
+    b = ListGroupBy(a2, [0, 1], 2)
+    c = b.target()
+    print(c)
 @cli.command()
 def flask_test2():
     click.echo('这是第2行临时命令')
+
 
 if __name__ == '__main__':
     cli()

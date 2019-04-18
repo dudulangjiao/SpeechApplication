@@ -13,7 +13,8 @@
    <li>  权重   文章ID                  标题&nbsp;&nbsp;</a></li>
   <ul>
   {% for row in query_outcome %}
-   <li>{{ row[0]|e }}&nbsp;&nbsp;{{ row[1]|e }}&nbsp;&nbsp;{{ row[2]|e }}&nbsp;&nbsp;<a href="/b/{{ row[1]|e }}">{{ row[3]|e }}</a></li>
+   <li>{{ row[0]|e }}&nbsp;&nbsp;&nbsp;{{ row[1]|e }}&nbsp;&nbsp;&nbsp;{{ row[2]|e }}&nbsp;&nbsp;&nbsp;
+     {{ row[3]|e }}&nbsp;&nbsp;&nbsp;<a href="/b/{{ row[2]|e }}">{{ row[4]|e }}</a></li>
   {% endfor %}
   </ul>
   {% else %}

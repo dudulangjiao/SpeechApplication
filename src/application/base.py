@@ -1,6 +1,6 @@
 from pyltp import Segmentor
 import os
-import math
+from operator import itemgetter
 
 # Set your own model path 设置模型路径
 MODELDIR = "/vagrant/software/ltp_data_v3.4.0"
@@ -65,25 +65,60 @@ class StringSortWeight(object):
         return sort_weight
 
 
-def group_by(one_list, kk, re):
+class ListGroupBy(object):
+    """创建一个函数，按1个或2个列进行分组合计或字符串连接。"""
+    def __init__(self, one_list, group_col_list, target_col_no):
+        self.one_list = one_list
+        self.group_col_list = group_col_list
+        self.target_col_no = target_col_no
 
-    one_list.sort(key=lambda s: s[kk], reverse = False)  # 按第kk列升序排序
+    def target(self):
+        if len(self.group_col_list) == 1:
+            one = self.group_col_list[0]
+            target = self.target_col_no
+            self.one_list.sort(key=itemgetter(one), reverse = False)  # 按第group_col_no列升序排序
 
-    ll = len(one_list)
-    # [[关键字权重，讲稿ID]，[......].......]
-    dk_list = [[]]
-    dk_list[0].append(one_list[0][re])
-    dk_list[0].append(one_list[0][kk])
-    wwt = 0
-    for rt in range(ll):
-        if rt == 0:
-            pass
-        elif one_list[rt][1] == one_list[rt-1][1]:
-            dk_list[wwt][0] = dk_list[wwt][0] + one_list[rt][0]
-        elif one_list[rt][1] != one_list[rt-1][1]:
-            wwt = wwt + 1
-            dk_list.append([])
-            dk_list[wwt].append(one_list[rt][0])
-            dk_list[wwt].append(one_list[rt][1])
+            ll = len(self.one_list)
+            # [[关键字权重，讲稿ID]，[......].......]
+            dk_list = [[]]
+            dk_list[0].append(self.one_list[0][one])
+            dk_list[0].append(self.one_list[0][target])
+            wwt = 0
+            for rt in range(ll):
+                if rt == 0:
+                    pass
+                elif self.one_list[rt][one] == self.one_list[rt-1][one]:
+                    dk_list[wwt][1] = dk_list[wwt][1] + self.one_list[rt][target]
+                elif self.one_list[rt][one] != self.one_list[rt-1][one]:
+                    wwt = wwt + 1
+                    dk_list.append([])
+                    dk_list[wwt].append(self.one_list[rt][one])
+                    dk_list[wwt].append(self.one_list[rt][target])
 
-    return dk_list
+            return dk_list
+
+        elif len(self.group_col_list) == 2:
+            one = self.group_col_list[0]
+            two = self.group_col_list[1]
+            target = self.target_col_no
+            self.one_list.sort(key=itemgetter(one, two), reverse=False)  # 按第group_col_no列升序排序
+            ll = len(self.one_list)
+            # [[关键字权重，讲稿ID]，[......].......]
+            dk_list = [[]]
+            dk_list[0].append(self.one_list[0][one])
+            dk_list[0].append(self.one_list[0][two])
+            dk_list[0].append(self.one_list[0][target])
+            wwt = 0
+
+            for rt in range(ll):
+                if rt == 0:
+                    pass
+                elif self.one_list[rt][one] == self.one_list[rt - 1][one] and self.one_list[rt][two] == self.one_list[rt - 1][two]:
+                    dk_list[wwt][2] = dk_list[wwt][2] + self.one_list[rt][target]
+                elif self.one_list[rt][one] != self.one_list[rt - 1][one] or self.one_list[rt][two] != self.one_list[rt - 1][two]:
+                    wwt = wwt + 1
+                    dk_list.append([])
+                    dk_list[wwt].append(self.one_list[rt][one])
+                    dk_list[wwt].append(self.one_list[rt][two])
+                    dk_list[wwt].append(self.one_list[rt][target])
+            return dk_list
