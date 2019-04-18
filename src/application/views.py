@@ -83,8 +83,7 @@ def submit_cm():
                     .filter(Sentence_sheet.speech_id_of_sentence == query_sen_result_list.speech_id_of_word,
                             Sentence_sheet.index_sentence_in_speech == query_sen_result_list.index_sentence_of_word_in_speech) \
                     .all()
-            #print('*********************************************')
-            #print(tmp_query_sentence)
+
             pda = []
             for tmp_query_sen_list in tmp_query_sentence:
                 pda.append(tmp_query_sen_list.sentence_content)
