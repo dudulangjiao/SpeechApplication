@@ -10,11 +10,11 @@
   <h1>查询页面</h1>
   {% if query_outcome %}
   <p>查询结果如下：</p>
-   <li>  权重   文章ID                  标题&nbsp;&nbsp;</a></li>
+   <li>  文章ID     作者           标题           权重         </a></li>
   <ul>
   {% for row in query_outcome %}
-   <li>{{ row[0]|e }}&nbsp;&nbsp;&nbsp;{{ row[1]|e }}&nbsp;&nbsp;&nbsp;{{ row[2]|e }}&nbsp;&nbsp;&nbsp;
-     {{ row[3]|e }}&nbsp;&nbsp;&nbsp;<a href="/b/{{ row[2]|e }}">{{ row[4]|e }}</a></li>
+   <li>{{ row[0]|e }}&nbsp;&nbsp;&nbsp;{{ row[1]|e }}&nbsp;&nbsp;
+     <a href="/b/{{ row[0]|e }}">{{ row[2]|e }}</a>&nbsp;&nbsp;{{ row[4]|e }}</li>
   {% endfor %}
   </ul>
   {% else %}

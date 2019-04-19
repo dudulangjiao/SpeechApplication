@@ -27,7 +27,7 @@ class LtpProcess(object):
 
         return words
 
-#  函数:给定一个词组列表和一个字符串，查找字符串中是否含有词组列表的任何组合，并返回权重
+
 class StringSortWeight(object):
     """函数:给定一个词组列表和一个字符串，查找字符串中是否含有词组列表的任何组合，并返回权重.
 
